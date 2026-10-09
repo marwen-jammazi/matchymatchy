@@ -1,6 +1,6 @@
 package com.moviematch.backend.dto;
 
-import com.moviematch.backend.model.WatchRoomAction;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
