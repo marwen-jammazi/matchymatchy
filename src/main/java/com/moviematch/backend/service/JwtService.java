@@ -3,6 +3,7 @@ package com.moviematch.backend.service;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -11,19 +12,38 @@ import java.util.Date;
 
 @Service
 public class JwtService {
-    private static  final String SECRET_KEY = "movie-match-super-secret-key-change-this-before-production-12345";
-    private final SecretKey key ;
-    public JwtService(){
-        this.key = Keys.hmacShaKeyFor(
-                SECRET_KEY.getBytes(StandardCharsets.UTF_8)
-        );
+
+    private final SecretKey key;
+    private final long expirationMs;
+
+    public JwtService(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.expiration-ms}") long expirationMs) {
+
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalArgumentException(
+                    "JWT secret must not be empty"
+            );
+        }
+
+        if (expirationMs <= 0) {
+            throw new IllegalArgumentException(
+                    "JWT expiration must be greater than zero"
+            );
+        }
+
+        byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
+
+        this.key = Keys.hmacShaKeyFor(secretBytes);
+        this.expirationMs = expirationMs;
     }
+
     public String generateToken(String email) {
 
         Date now = new Date();
 
         Date expiration = new Date(
-                now.getTime() + 1000 * 60 * 60
+                now.getTime() + expirationMs
         );
 
         return Jwts.builder()
@@ -33,6 +53,7 @@ public class JwtService {
                 .signWith(key)
                 .compact();
     }
+
     public String extractEmail(String token) {
 
         return Jwts.parser()

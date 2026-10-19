@@ -8,7 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/watch-rooms")
+@RequestMapping("/api/v1/watch-rooms")
 public class WatchRoomController {
 
     private final WatchRoomService watchRoomService;
@@ -33,11 +33,9 @@ public class WatchRoomController {
                         new RuntimeException("User not found"))
                 .getId();
 
-        return watchRoomService.createRoom(
-                userId,
-                matchId
-        );
+        return watchRoomService.createRoom(userId, matchId);
     }
+
     @GetMapping("/{roomId}")
     public WatchRoomResponse getRoom(
             @PathVariable String roomId,
@@ -49,12 +47,9 @@ public class WatchRoomController {
                         new RuntimeException("User not found"))
                 .getId();
 
-        return watchRoomService.getRoom(
-                userId,
-                roomId
-        );
-
+        return watchRoomService.getRoom(userId, roomId);
     }
+
     @GetMapping("/{roomId}/playback")
     public PlaybackStateResponse getPlaybackState(
             @PathVariable String roomId,

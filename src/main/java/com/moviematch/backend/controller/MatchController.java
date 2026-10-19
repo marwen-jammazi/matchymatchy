@@ -1,16 +1,16 @@
 package com.moviematch.backend.controller;
 
 import com.moviematch.backend.dto.MatchResponse;
+import com.moviematch.backend.dto.PageResponse;
 import com.moviematch.backend.model.User;
 import com.moviematch.backend.repository.UserRepository;
 import com.moviematch.backend.service.MatchService;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/matches")
+@RequestMapping("/api/v1/matches")
 public class MatchController {
 
     private final MatchService matchService;
@@ -25,14 +25,32 @@ public class MatchController {
     }
 
     @GetMapping
-    public List<MatchResponse> getMyMatches(
-            Authentication authentication) {
+    public PageResponse<MatchResponse> getMyMatches(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
         User user = userRepository
                 .findByEmail(authentication.getName())
                 .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                        new IllegalStateException(
+                                "Authenticated user not found"
+                        ));
 
-        return matchService.getUserMatches(user.getId());
+        Page<MatchResponse> matches =
+                matchService.getUserMatches(
+                        user.getId(),
+                        page,
+                        size
+                );
+
+        return new PageResponse<>(
+                matches.getContent(),
+                matches.getNumber(),
+                matches.getSize(),
+                matches.getTotalElements(),
+                matches.getTotalPages(),
+                matches.isLast()
+        );
     }
 }
