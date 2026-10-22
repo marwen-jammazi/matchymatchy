@@ -1,5 +1,7 @@
 package com.moviematch.backend.config;
 
+
+
 import com.moviematch.backend.ratelimit.RateLimitFilter;
 import com.moviematch.backend.security.JwtAuthenticationFilter;
 import jakarta.servlet.DispatcherType;
@@ -11,6 +13,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @EnableMethodSecurity
@@ -19,17 +22,19 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
-
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
             RateLimitFilter rateLimitFilter,
-            CustomAuthenticationEntryPoint authenticationEntryPoint) {
+            CustomAuthenticationEntryPoint authenticationEntryPoint,
+            CustomAccessDeniedHandler accessDeniedHandler) {
 
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.rateLimitFilter = rateLimitFilter;
         this.authenticationEntryPoint = authenticationEntryPoint;
+        this.accessDeniedHandler = accessDeniedHandler;
     }
 
     @Bean
@@ -45,10 +50,9 @@ public class SecurityConfig {
                         )
                 )
 
-                .exceptionHandling(exception ->
-                        exception.authenticationEntryPoint(
-                                authenticationEntryPoint
-                        )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                 )
 
                 .authorizeHttpRequests(auth -> auth
@@ -89,7 +93,7 @@ public class SecurityConfig {
                                 "/swagger-ui/**"
                         ).permitAll()
 
-                        // Everything else requires authentication.
+                        // All other endpoints require authentication.
                         .anyRequest().authenticated()
                 )
 
