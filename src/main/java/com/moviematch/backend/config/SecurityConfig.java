@@ -19,6 +19,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
+
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
 
     public SecurityConfig(

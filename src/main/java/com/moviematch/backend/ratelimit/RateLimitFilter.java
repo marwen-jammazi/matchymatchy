@@ -1,5 +1,5 @@
-package com.moviematch.backend.ratelimit;
-
+﻿package com.moviematch.backend.ratelimit;
+import org.springframework.http.HttpStatus;
 import com.moviematch.backend.audit.AuditService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -40,6 +40,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
+        // Rate-limit API endpoints only.
         if (!path.startsWith("/api/")) {
             filterChain.doFilter(request, response);
             return;
@@ -51,18 +52,21 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String endpointGroup;
         int limit;
 
+        // Login rate limit.
         if ("POST".equalsIgnoreCase(method)
                 && "/api/v1/auth/login".equals(path)) {
 
             endpointGroup = "login";
             limit = properties.getLoginLimit();
 
+        // Registration rate limit.
         } else if ("POST".equalsIgnoreCase(method)
                 && "/api/v1/users".equals(path)) {
 
             endpointGroup = "register";
             limit = properties.getRegistrationLimit();
 
+        // Default rate limit for other API endpoints.
         } else {
 
             endpointGroup = method.toLowerCase() + ":" + path;
@@ -77,7 +81,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
         boolean allowed;
 
         try {
-            allowed = rateLimitService.isAllowed(identity, limit);
+            allowed = rateLimitService.isAllowed(
+                    identity,
+                    limit
+            );
 
         } catch (RedisConnectionFailureException
                  | RedisSystemException
@@ -87,15 +94,16 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Reject requests that exceed their configured limit.
         if (!allowed) {
 
             auditService.logRateLimitExceeded(
-                    endpointGroup,
+                    identity,
                     path
             );
 
             response.setStatus(
-                    HttpServletResponse.SC_BAD_REQUEST
+                    response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             );
 
             response.setContentType("application/json");
@@ -120,12 +128,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
             String endpointGroup,
             String clientIp) {
 
+        // Use the client IP for login and registration limits.
         if ("login".equals(endpointGroup)
                 || "register".equals(endpointGroup)) {
 
             return endpointGroup + ":" + clientIp;
         }
 
+        // Use the authenticated user's identity where available.
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
@@ -134,9 +144,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 && authentication.getName() != null
                 && !authentication.getName().equals("anonymousUser")) {
 
-            return endpointGroup + ":user:" + authentication.getName();
+            return endpointGroup
+                    + ":user:"
+                    + authentication.getName();
         }
 
+        // Unauthenticated requests use their client IP.
         return endpointGroup + ":ip:" + clientIp;
     }
 
