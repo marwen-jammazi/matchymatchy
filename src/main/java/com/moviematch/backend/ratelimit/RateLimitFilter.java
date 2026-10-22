@@ -1,5 +1,6 @@
 package com.moviematch.backend.ratelimit;
 
+import com.moviematch.backend.audit.AuditService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,13 +19,16 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private final RateLimitService rateLimitService;
     private final RateLimitProperties properties;
+    private final AuditService auditService;
 
     public RateLimitFilter(
             RateLimitService rateLimitService,
-            RateLimitProperties properties) {
+            RateLimitProperties properties,
+            AuditService auditService) {
 
         this.rateLimitService = rateLimitService;
         this.properties = properties;
+        this.auditService = auditService;
     }
 
     @Override
@@ -48,13 +52,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
         int limit;
 
         if ("POST".equalsIgnoreCase(method)
-                && "/api/auth/login".equals(path)) {
+                && "/api/v1/auth/login".equals(path)) {
 
             endpointGroup = "login";
             limit = properties.getLoginLimit();
 
         } else if ("POST".equalsIgnoreCase(method)
-                && "/api/users".equals(path)) {
+                && "/api/v1/users".equals(path)) {
 
             endpointGroup = "register";
             limit = properties.getRegistrationLimit();
@@ -84,9 +88,19 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
 
         if (!allowed) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+
+            auditService.logRateLimitExceeded(
+                    endpointGroup,
+                    path
+            );
+
+            response.setStatus(
+                    HttpServletResponse.SC_BAD_REQUEST
+            );
+
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
+
             response.setHeader(
                     "Retry-After",
                     String.valueOf(properties.getWindowSeconds())
@@ -135,6 +149,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
+
         response.setHeader("Retry-After", "30");
 
         response.getWriter().write(

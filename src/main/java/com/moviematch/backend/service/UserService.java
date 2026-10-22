@@ -1,5 +1,6 @@
 package com.moviematch.backend.service;
 
+import com.moviematch.backend.audit.AuditService;
 import com.moviematch.backend.dto.UserRequest;
 import com.moviematch.backend.dto.UserResponse;
 import com.moviematch.backend.exception.EmailAlreadyExistsException;
@@ -14,19 +15,24 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditService auditService;
 
     public UserService(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            AuditService auditService) {
 
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.auditService = auditService;
     }
 
     public UserResponse createUser(UserRequest request) {
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new EmailAlreadyExistsException("Email is already registered");
+            throw new EmailAlreadyExistsException(
+                    "Email is already registered"
+            );
         }
 
         User user = new User();
@@ -38,6 +44,8 @@ public class UserService {
         user.setRole(Role.USER);
 
         User savedUser = userRepository.save(user);
+
+        auditService.logUserRegistration(savedUser.getEmail());
 
         UserResponse response = new UserResponse();
 
