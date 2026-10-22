@@ -20,8 +20,8 @@ public class UserService {
     public UserService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            AuditService auditService) {
-
+            AuditService auditService
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditService = auditService;
@@ -40,7 +40,9 @@ public class UserService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPassword(
+                passwordEncoder.encode(request.getPassword())
+        );
         user.setRole(Role.USER);
 
         User savedUser = userRepository.save(user);

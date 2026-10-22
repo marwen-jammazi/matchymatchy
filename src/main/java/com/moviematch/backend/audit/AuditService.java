@@ -38,7 +38,10 @@ public class AuditService {
         );
     }
 
-    public void logRateLimitExceeded(String clientId, String endpoint) {
+    public void logRateLimitExceeded(
+            String clientId,
+            String endpoint
+    ) {
         auditLogger.warn(
                 "event=RATE_LIMIT_EXCEEDED clientId={} endpoint={}",
                 clientId,

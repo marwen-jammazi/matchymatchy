@@ -5,7 +5,7 @@ import com.moviematch.backend.service.MovieService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/movies")
+@RequestMapping("/api/v1/movies")
 public class MovieController {
 
     private final MovieService movieService;

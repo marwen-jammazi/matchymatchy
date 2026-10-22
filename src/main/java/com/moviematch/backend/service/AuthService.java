@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService {
 
-
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -22,8 +21,8 @@ public class AuthService {
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            AuditService auditService) {
-
+            AuditService auditService
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
@@ -32,7 +31,8 @@ public class AuthService {
 
     public LoginResponse login(LoginRequest request) {
 
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository
+                .findByEmail(request.getEmail())
                 .orElse(null);
 
         if (user == null) {
@@ -45,8 +45,8 @@ public class AuthService {
 
         if (!passwordEncoder.matches(
                 request.getPassword(),
-                user.getPassword())) {
-
+                user.getPassword()
+        )) {
             auditService.logLoginFailure();
 
             throw new InvalidCredentialsException(
@@ -57,6 +57,7 @@ public class AuthService {
         String token = jwtService.generateToken(user.getEmail());
 
         LoginResponse response = new LoginResponse();
+
         response.setToken(token);
         response.setTokenType("Bearer");
         response.setUserId(user.getId());
@@ -66,6 +67,4 @@ public class AuthService {
 
         return response;
     }
-
-
 }

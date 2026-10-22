@@ -1,18 +1,17 @@
 package com.moviematch.backend.config;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Getter
+@Setter
 @Component
-@ConfigurationProperties
+@ConfigurationProperties(prefix = "omdb.api")
 public class OmdbProperties {
-    private String apiKey ;
-    private String baseUrl ;
 
+    private String key;
+
+    private String baseUrl;
 }
